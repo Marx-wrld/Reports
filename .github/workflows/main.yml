@@ -1,0 +1,106 @@
+name: Publish and Deploy Docker Image
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  build_and_push_to_registry:
+    name: Push Docker Image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # specify the Node.js version you need
+
+      - name: Install dependencies and build
+        run: |
+          yarn install
+          yarn run build
+          
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: imarxdock/gltool
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: ./dist
+          file: ./dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            imarxdock/gltool:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          
+  deploy_to_server:
+    name: Deploy Docker Image to Docker Swarm
+    needs: [build_and_push_to_registry]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Docker Swarm
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          script: |
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+            
+            # Remove existing services
+            echo "Stopping and removing existing services..."
+            if docker service inspect gltool > /dev/null 2>&1; then
+              docker service rm gltool
+              echo "Service gltool removed."
+            else
+              echo "No existing service named gltool."
+            fi
+            
+            # Stop and remove all containers using the specific image
+            echo "Stopping and removing containers using image imarxdock/gltool..."
+            containers=$(docker ps -a --filter ancestor=imarxdock/gltool -q)
+            if [ -n "$containers" ]; then
+              docker stop $containers
+              docker rm $containers
+              echo "Containers using image imarxdock/gltool have been stopped and removed."
+            else
+              echo "No containers found using image imarxdock/gltool."
+            fi
+
+            # Remove old images
+            if docker images imarxdock/gltool -q | grep -q .; then
+              echo "Removing old images for imarxdock/gltool"
+              docker rmi -f $(docker images imarxdock/gltool -q)
+            else
+              echo "No old images found for imarxdock/gltool."
+            fi
+            
+            # Remove dangling images
+            if docker images -f "dangling=true" -q | grep -q .; then
+              echo "Removing dangling images"
+              docker rmi $(docker images -f "dangling=true" -q) || true
+            else
+              echo "No dangling images found."
+            fi
+            
+            # Pull docker image from docker hub
+            echo "Pulling docker image from docker hub"
+            docker pull imarxdock/gltool:latest
+            
+            # Deploy new service to Docker Swarm
+            echo "Deploying new service: gltool"
+            docker service create \
+              --name gltool \
+              --network vsl-swarm \
+              --publish published=5173,target=8080 \
+                imarxdock/gltool:latest

@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "typeRoots": ["node_modules/@types", "custom-typings"],
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+        // /* import alias */
+        "baseUrl": ".",
+        "paths": {
+          "@/*": ["src/*"]
+        }
+  },
+  "typeRoots": [
+    "./typings",
+    "./node_modules/@types/"
+  ],
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="./favicon.ico" type="image/svg+xml" href="./public/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta property="og:title" content="Velocity Software Ltd - Your #1 Software Development Partner in Africa">
+  <meta name="description" content="Velocity Software Ltd is a financial technology and software development firm who are driving the global fintech agenda and financial inclusion in Africa through innovative and affordable solutions.">
+  <meta property="og:description" content="We are a financial technology and software development firm who are driving the global fintech agenda and financial inclusion in Africa through innovative and affordable solutions.">
+  <meta property="og:url" content="https://gltool.velocity.co.ke/">
+  <meta property="og:site_name" content="Velocity Software Ltd">
+  <meta name="twitter:title" content="Velocity Software Ltd - Your #1 Software Development Partner in Africa">
+  <meta name="twitter:description" content="We are a financial technology and software development firm who are driving the global fintech agenda and financial inclusion in Africa through innovative and affordable solutions.">
+  <link rel="shortlink" href="https://gltool.velocity.co.ke/">
+  <title>GL File Tool</title>
+  <style>
+    #splash-screen {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      background: white;
+      display: flex;
+      height: 100%;
+      width: 100%;
+      transform: translate(-50%, -50%);
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 1;
+      transition: all 15s linear;
+      overflow: hidden;
+    }
+
+    #splash-screen.remove {
+      animation: fadeout 0.7s forwards;
+      z-index: 0;
+    }
+
+    @keyframes fadeout {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <div id="splash-screen">
+    <img alt="Logo" class="light" src="/images/logo-dark.png" style="height: 10%" />
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
+  <script>
+    // Function to remove the splash screen
+    const removeSplashScreen = () => {
+      const splashScreen = document.querySelector('#splash-screen');
+      if (splashScreen) {
+        splashScreen.classList.add('remove');
+      }
+    };
+  
+    // Create a new instance of MutationObserver
+    const observer = new MutationObserver((mutationsList, observer) => {
+      // Handle mutations here
+      mutationsList.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          // Node has been inserted or removed
+          removeSplashScreen();
+        }
+      });
+    });
+  
+    // Define the configuration options for the observer
+    const config = { childList: true };
+  
+    // Start observing the target node for configured mutations
+    observer.observe(document.getElementById('root'), config);
+  </script>
+</body>
+
+</html>

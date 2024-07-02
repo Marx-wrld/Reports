@@ -1,0 +1,14 @@
+/* styles.css */
+.header-container {
+    display: flex;
+  }
+  
+  .header-styling {
+    flex: 1;
+    padding-right: 20px; /* Adjust spacing between sections */
+  }
+  
+  .header-content {
+    flex: 1;
+  }
+  
